@@ -9,13 +9,11 @@ export default function Carrito({ productos, carrito, quitar, cambiarCantidad })
             <p key={p.id}>
                 {p.nombre}: {p.cantidad} unidades{' '}
                 <button
-                    aria-label={`Quitar una unidad de ${p.nombre}`}
                     onClick={() => cambiarCantidad(p.id, p.cantidad - 1)}
-                >−</button>
+                >Disminuir −</button>
                 <button
-                    aria-label={`Agregar una unidad de ${p.nombre}`}
                     onClick={() => cambiarCantidad(p.id, p.cantidad + 1)}
-                >+</button>
+                >Agregar +</button>
                 <button onClick={() => quitar(p.id)}>Eliminar {p.nombre}</button>
             </p>
         ))}
