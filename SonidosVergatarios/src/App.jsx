@@ -1,4 +1,6 @@
-import { useEffect, useReducer, useState } from 'react';
+import { useEffect, useReducer } from 'react';
+import { Route, Routes } from 'react-router';
+import { Link, Route, Routes, useLocation } from 'react-router';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import Inicio from './pages/Inicio.jsx';
@@ -9,17 +11,12 @@ import { productosIniciales } from './data/productosIniciales.js';
 import { crearEstado, tiendaReducer, resumenCarrito } from './store/TiendaVergataria.js';
 
 export default function App() {
-  const [ruta, setRuta] = useState(window.location.hash || '#/');
   const [estado, dispatch] = useReducer(tiendaReducer, productosIniciales, crearEstado);
 
+const location = useLocation();
 useEffect(() => {
-  function actualizarRuta() {
-    setRuta(window.location.hash || '#/');
-    dispatch({ type: 'CERRAR_AVISO' });
-  }
-  window.addEventListener('hashchange', actualizarRuta);
-  return () => window.removeEventListener('hashchange', actualizarRuta);
-}, []);
+  dispatch({ type: 'CERRAR_AVISO' });
+}, [location.pathname]);
 
   const alAgregar = (id) => dispatch({ type: 'AGREGAR', id });
   const quitar = (id) => dispatch({ type: 'QUITAR', id });
