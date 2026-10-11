@@ -1,5 +1,4 @@
 import { useEffect, useReducer } from 'react';
-import { Route, Routes } from 'react-router';
 import { Link, Route, Routes, useLocation } from 'react-router';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
@@ -23,27 +22,9 @@ useEffect(() => {
   const cambiarCantidad = (id, cantidad) => dispatch({ type: 'CANTIDAD', id, cantidad });
   const { unidades } = resumenCarrito(estado);
 
-  let pagina;
-  if (ruta === '#/productos') {
-    pagina = <Productos productos={estado.productos} alAgregar={alAgregar} />;
-  } else if (ruta === '#/carrito') {
-  pagina = (
-    <Carrito
-      productos={estado.productos}
-      carrito={estado.carrito}
-      quitar={quitar}
-      cambiarCantidad={cambiarCantidad} 
-    />
-  );
-  } else if (ruta === '#/contacto') {
-    pagina = <Contacto />;
-  } else {
-    pagina = <Inicio />;
-  }
-
-  return (
+return (
     <>
-      <Header cantidad={unidades} ruta={ruta} />
+      <Header cantidad={unidades} />
       <main>
         {estado.aviso && (
           <div className={`alert alert-${estado.aviso.tipo}`} role="alert">
@@ -55,7 +36,26 @@ useEffect(() => {
             />
           </div>
         )}
-        {pagina}
+
+        <Routes>
+          <Route path="/" element={<Inicio />} />
+          <Route path="/productos" element={<Productos productos={estado.productos} alAgregar={alAgregar} />} />
+          <Route path="/carrito" element={
+            <Carrito
+              productos={estado.productos}
+              carrito={estado.carrito}
+              quitar={quitar}
+              cambiarCantidad={cambiarCantidad}
+            />
+          } />
+          <Route path="/contacto" element={<Contacto />} />
+          <Route path="*" element={
+            <section>
+              <h1>Página no encontrada</h1>
+              <Link to="/">Volver al inicio</Link>
+            </section>
+          } />
+        </Routes>
       </main>
       <Footer />
     </>

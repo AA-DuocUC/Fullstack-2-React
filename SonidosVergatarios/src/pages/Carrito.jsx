@@ -1,4 +1,5 @@
 import { precioCLP } from '../utils/formato.js';
+import { Link } from 'react-router';
 
 export default function Carrito({ productos, carrito, quitar, cambiarCantidad }) {
     const detalle = carrito.map(item => ({ ...productos.find(p => p.id === item.id), cantidad: item.cantidad }));
@@ -18,6 +19,6 @@ export default function Carrito({ productos, carrito, quitar, cambiarCantidad })
             </p>
         ))}
         <p>Total sin envío: {precioCLP(total)}</p>
-        <a href="#/productos">Continuar comprando</a>
+        <Link to="/productos">Continuar comprando</Link>
     </section>;
 }
