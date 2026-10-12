@@ -17,8 +17,6 @@ export default function App() {
     dispatch({ type: 'CERRAR_AVISO' });
   }, [location.pathname, dispatch]);
 
-  const quitar = (id) => dispatch({ type: 'QUITAR', id });
-  const cambiarCantidad = (id, cantidad) => dispatch({ type: 'CANTIDAD', id, cantidad });
   const { unidades } = resumenCarrito(estado);
 
   return (
@@ -39,14 +37,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Inicio />} />
           <Route path="/productos" element={<Productos />} />
-          <Route path="/carrito" element={
-            <Carrito
-              productos={estado.productos}
-              carrito={estado.carrito}
-              quitar={quitar}
-              cambiarCantidad={cambiarCantidad}
-            />
-          } />
+          <Route path="/carrito" element={<Carrito />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="*" element={
             <section>
