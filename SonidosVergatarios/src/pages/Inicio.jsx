@@ -4,7 +4,7 @@ import Button from 'react-bootstrap/Button';
 import CarruselProductos from '../components/CarruselProductos.jsx';
 
 export default function Inicio() {
-  return (
+  return(
     <>
       <section className="hero py-5">
         <Container className="py-4">
