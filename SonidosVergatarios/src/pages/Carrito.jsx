@@ -11,10 +11,10 @@ export default function Carrito({ productos, carrito, quitar, cambiarCantidad })
                 {p.nombre}: {p.cantidad} unidades{' '}
                 <button
                     onClick={() => cambiarCantidad(p.id, p.cantidad - 1)}
-                >Disminuir −</button>
+                >−</button>
                 <button
                     onClick={() => cambiarCantidad(p.id, p.cantidad + 1)}
-                >Agregar +</button>
+                >+</button>
                 <button onClick={() => quitar(p.id)}>Eliminar {p.nombre}</button>
             </p>
         ))}
