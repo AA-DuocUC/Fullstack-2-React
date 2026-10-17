@@ -1,68 +1,66 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { useAuth } from '../context/AuthContext';
+import { Navigate, useLocation, useNavigate } from 'react-router';
+import Container from 'react-bootstrap/Container';
+import Form from 'react-bootstrap/Form';
+import Button from 'react-bootstrap/Button';
+import Alert from 'react-bootstrap/Alert';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Login() {
-  const [usuarioInput, setUsuarioInput] = useState('');
-  const [passwordInput, setPasswordInput] = useState('');
+  const { sesion, ingresar } = useAuth();
+  const [usuario, setUsuario] = useState('');
+  const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState('');
-
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const destino = location.state?.desde?.startsWith('/admin')
+    ? location.state.desde
+    : '/admin';
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!usuarioInput || !passwordInput) {
-      setError('Por favor completa todos los campos.');
-      return;
-    }
+  if (sesion?.rol === 'admin') return <Navigate to={destino} replace />;
 
-    // Validación de administrador
-    if (usuarioInput === 'admin' && passwordInput === '1234') {
-      login({ nombre: 'Administrador', rol: 'admin' });
-      navigate('/admin');
-    } else {
-      setError('Usuario o contraseña incorrectos.');
-    }
-  };
+  function enviar(evento) {
+    evento.preventDefault();
+    if (ingresar(usuario, contrasena)) navigate(destino, { replace: true });
+    else setError('Usuario o contraseña incorrectos.');
+  }
 
   return (
-    <div className="container my-5 d-flex justify-content-center">
-      <div className="card shadow-lg p-4" style={{ maxWidth: '400px', width: '100%' }}>
-        <h3 className="card-title text-center mb-4 fw-bold">Inicio de sesión administrador</h3>
-        
-        {error && <div className="alert alert-danger p-2 text-center small">{error}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="form-label fw-semibold" htmlFor="usuario">Usuario</label>
-            <input
-              id="usuario"
-              type="text"
-              className="form-control"
-              placeholder="Ej: admin"
-              value={usuarioInput}
-              onChange={(e) => setUsuarioInput(e.target.value)}
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="form-label fw-semibold" htmlFor="password">Contraseña</label>
-            <input
-              id="password"
-              type="password"
-              className="form-control"
-              placeholder="••••••••"
-              value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary w-100 fw-bold py-2">
-            Ingresar
-          </button>
-        </form>
-      </div>
-    </div>
+    <Container as="section" className="py-4">
+      <h1>Inicio de sesión administrador</h1>
+      <p>
+        Acceso de demostración para el proyecto académico (usuario{' '}
+        <strong>admin</strong>, clave <strong>1234</strong>).
+      </p>
+      <Form className="formulario-login" onSubmit={enviar}>
+        <Form.Group controlId="usuario" className="mb-3">
+          <Form.Label>Usuario</Form.Label>
+          <Form.Control
+            value={usuario}
+            onChange={(e) => {
+              setUsuario(e.target.value);
+              setError('');
+            }}
+            autoComplete="username"
+            required
+          />
+        </Form.Group>
+        <Form.Group controlId="contrasena" className="mb-3">
+          <Form.Label>Contraseña</Form.Label>
+          <Form.Control
+            type="password"
+            value={contrasena}
+            onChange={(e) => {
+              setContrasena(e.target.value);
+              setError('');
+            }}
+            autoComplete="current-password"
+            required
+          />
+        </Form.Group>
+        {error && <Alert variant="danger">{error}</Alert>}
+        <Button type="submit">Ingresar</Button>
+      </Form>
+    </Container>
   );
 }

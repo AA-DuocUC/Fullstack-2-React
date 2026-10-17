@@ -1,16 +1,57 @@
-# React + Vite
+# SonidosVergatarios
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tienda de instrumentos musicales hecha con **React + Vite**. Es la migración a React del proyecto inicial de la Unidad 1 (Fullstack 2): catálogo con filtros, carrito con stock, compra simulada, contacto con validación y un panel de administración protegido por login.
 
-Currently, two official plugins are available:
+## Tecnologías
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19, Vite 8 y React Router 7 (rutas sin `#`)
+- React Bootstrap 2 / Bootstrap 5
+- Swiper (carrusel de productos destacados)
+- Vitest + Testing Library (pruebas)
 
-## React Compiler
+## Cómo ejecutarlo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev          # servidor de desarrollo
+npm run build        # versión de producción
+npm run lint         # revisión de código
+npm run test:run     # pruebas (una vez)
+npm run test:coverage
+```
 
-## Expanding the ESLint configuration
+## Acceso de administrador (demostración)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| Usuario | Contraseña |
+|---------|------------|
+| `admin` | `1234`     |
+
+Entra por **Ingresar** o abre `/admin`. La validación es solo de demostración académica: en una tienda real debe hacerse en un servidor.
+
+## Funciones
+
+- **Inicio**: portada, carrusel de productos y accesos rápidos.
+- **Productos**: búsqueda por nombre y filtros por categoría, disponibilidad y precio máximo.
+- **Carrito**: cantidades limitadas por stock, subtotal, envío simulado, total, vaciar y compra con confirmación (descuenta stock).
+- **Contacto**: formulario validado en el navegador (no envía correo).
+- **Admin** (requiere login): crear, editar y eliminar productos. Eliminar un producto también lo retira del carrito.
+- Los productos, el carrito y la sesión se guardan en `localStorage`.
+
+## Estructura
+
+```
+src/
+  components/   Header, Footer, Layout, RutaAdmin, modales, tarjetas, carrusel
+  context/      TiendaContext (catálogo y carrito) y AuthContext (sesión)
+  pages/        Inicio, Productos, Carrito, Contacto, Login, Admin, NoEncontrada
+  services/     almacen_tienda.js (lectura y escritura en localStorage)
+  store/        TiendaVergataria.js (reducer: reglas de la tienda)
+  utils/        formato.js y validaciones.js
+  data/         productosIniciales.js
+```
+
+## Pruebas
+
+`npm run test:run` ejecuta 51 pruebas en 4 archivos: reglas del reducer, validaciones y formato, persistencia y flujos completos de la interfaz (login, catálogo, carrito, compra, Admin y contacto).
+
+`public/_redirects` contiene la regla de fallback para hosting estático (Netlify), necesaria para recargar rutas como `/productos`.

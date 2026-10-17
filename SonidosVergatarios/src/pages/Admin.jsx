@@ -1,264 +1,160 @@
 import { useState } from 'react';
-import { useTienda } from '../context/TiendaContext';
-import { useAuth } from '../context/AuthContext';
-import ConfirmarModal from '../components/ConfirmarModal';
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Card from 'react-bootstrap/Card';
+import Button from 'react-bootstrap/Button';
+import Badge from 'react-bootstrap/Badge';
+import Table from 'react-bootstrap/Table';
+import ProductoModal from '../components/ProductoModal.jsx';
+import ConfirmarModal from '../components/ConfirmarModal.jsx';
+import { precioCLP, estadoStock } from '../utils/formato.js';
+import { useTienda } from '../context/TiendaContext.jsx';
 
 export default function Admin() {
-  const { productos, agregarProducto, editarProducto, eliminarProducto } = useTienda();
-  const { usuario } = useAuth();
+  const { estado, dispatch } = useTienda();
+  const [modal, setModal] = useState(false);
+  const [editando, setEditando] = useState(null);
+  const [eliminando, setEliminando] = useState(null);
+  const productos = estado.productos;
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [productoEditar, setProductoEditar] = useState(null);
-  const [eliminarId, setEliminarId] = useState(null);
+  function crear() {
+    setEditando(null);
+    setModal(true);
+  }
 
-  const [formData, setFormData] = useState({
-    nombre: '',
-    precio: '',
-    stock: '',
-    categoria: 'Accesorios',
-    imagen: '',
-    disponibilidad: 'disponible',
-  });
+  function editar(producto) {
+    setEditando(producto);
+    setModal(true);
+  }
 
-  const [errorForm, setErrorForm] = useState('');
+  function guardar(datos, id) {
+    dispatch({ type: 'GUARDAR_PRODUCTO', datos, id });
+    setModal(false);
+  }
 
-  const abrirModalCrear = () => {
-    setProductoEditar(null);
-    setFormData({
-      nombre: '',
-      precio: '',
-      stock: '',
-      categoria: 'Accesorios',
-      imagen: '',
-      disponibilidad: 'disponible',
-    });
-    setErrorForm('');
-    setModalOpen(true);
-  };
+  function confirmarEliminar() {
+    dispatch({ type: 'ELIMINAR_PRODUCTO', id: eliminando.id });
+    setEliminando(null);
+  }
 
-  const abrirModalEditar = (prod) => {
-    setProductoEditar(prod);
-    setFormData({
-      nombre: prod.nombre,
-      precio: prod.precio,
-      stock: prod.stock,
-      categoria: prod.categoria || 'Accesorios',
-      imagen: prod.imagen || '',
-      disponibilidad: prod.disponibilidad || 'disponible',
-    });
-    setErrorForm('');
-    setModalOpen(true);
-  };
-
-  const handleGuardar = (e) => {
-    e.preventDefault();
-    if (!formData.nombre.trim()) {
-      setErrorForm('El nombre es obligatorio.');
-      return;
-    }
-    if (Number(formData.precio) <= 0) {
-      setErrorForm('El precio debe ser mayor que cero.');
-      return;
-    }
-    if (Number(formData.stock) < 0) {
-      setErrorForm('El stock no puede ser negativo.');
-      return;
-    }
-
-    const nombreExiste = productos.some(
-      (p) => p.nombre.toLowerCase() === formData.nombre.trim().toLowerCase() && p.id !== productoEditar?.id
-    );
-
-    if (nombreExiste) {
-      setErrorForm('Ya existe un producto con ese nombre.');
-      return;
-    }
-
-    const productoData = {
-      nombre: formData.nombre.trim(),
-      precio: Number(formData.precio),
-      stock: Number(formData.stock),
-      categoria: formData.categoria,
-      imagen: formData.imagen || 'https://via.placeholder.com/150',
-      disponibilidad: Number(formData.stock) > 0 ? 'disponible' : 'agotado',
-    };
-
-    if (productoEditar) {
-      editarProducto(productoEditar.id, productoData);
-    } else {
-      agregarProducto(productoData);
-    }
-
-    setModalOpen(false);
-  };
-
-  const confirmarEliminar = () => {
-    if (eliminarId) {
-      eliminarProducto(eliminarId);
-      setEliminarId(null);
-    }
-  };
+  const resumen = [
+    { titulo: 'Productos', valor: productos.length },
+    {
+      titulo: 'Unidades de stock',
+      valor: productos.reduce((total, p) => total + p.stock, 0),
+    },
+    {
+      titulo: 'Categorías',
+      valor: new Set(productos.map((p) => p.categoria)).size,
+    },
+  ];
 
   return (
-    <div className="container my-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Administración de productos</h2>
-        <button className="btn btn-success" onClick={abrirModalCrear}>
-          + Nuevo producto
-        </button>
-      </div>
-
-      <div className="table-responsive">
-        <table className="table table-striped align-middle">
-          <thead>
-            <tr>
-              <th>Imagen</th>
-              <th>Nombre</th>
-              <th>Categoría</th>
-              <th>Precio</th>
-              <th>Stock</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {productos.map((prod) => (
-              <tr key={prod.id}>
-                <td>
-                  <img
-                    src={prod.imagen || 'https://via.placeholder.com/50'}
-                    alt={prod.nombre}
-                    style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px' }}
-                  />
-                </td>
-                <td className="fw-bold">{prod.nombre}</td>
-                <td>{prod.categoria}</td>
-                <td>${prod.precio.toLocaleString('es-CL')}</td>
-                <td>
-                  <span className={`badge ${prod.stock > 0 ? 'bg-primary' : 'bg-danger'}`}>
-                    {prod.stock} un.
-                  </span>
-                </td>
-                <td>
-                  <button
-                    className="btn btn-sm btn-outline-primary me-2"
-                    onClick={() => abrirModalEditar(prod)}
-                    aria-label={`Editar ${prod.nombre}`}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="btn btn-sm btn-outline-danger"
-                    onClick={() => setEliminarId(prod.id)}
-                    aria-label={`Eliminar ${prod.nombre}`}
-                  >
-                    Eliminar
-                  </button>
-                </td>
-              </tr>
+    <Container as="section" className="py-4">
+      <h1>Administración de productos</h1>
+      <Row className="g-3 mb-4">
+        {resumen.map((r) => (
+          <Col sm={4} key={r.titulo}>
+            <Card>
+              <Card.Body>
+                <h2 className="h6">{r.titulo}</h2>
+                <strong className="fs-3">{r.valor}</strong>
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
+      <Button className="mb-3" onClick={crear}>
+        Nuevo producto
+      </Button>
+      <Table responsive striped hover>
+        <thead>
+          <tr>
+            {[
+              'ID',
+              'Producto',
+              'Categoría',
+              'Precio',
+              'Stock',
+              'Estado',
+              'Acciones',
+            ].map((c) => (
+              <th scope="col" key={c}>
+                {c}
+              </th>
             ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Modal Crear / Editar */}
-      {modalOpen && (
-        <div className="modal d-block bg-dark bg-opacity-50" tabIndex="-1" role="dialog" aria-modal="true">
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">
-                  {productoEditar ? `Editar ${productoEditar.nombre}` : 'Nuevo producto'}
-                </h5>
-                <button type="button" className="btn-close" onClick={() => setModalOpen(false)}></button>
-              </div>
-              <form onSubmit={handleGuardar}>
-                <div className="modal-body">
-                  {errorForm && <div className="alert alert-danger">{errorForm}</div>}
-
-                  <div className="mb-3">
-                    <label className="form-label" htmlFor="nombre-input">Nombre</label>
-                    <input
-                      id="nombre-input"
-                      type="text"
-                      className="form-control"
-                      value={formData.nombre}
-                      onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+          </tr>
+        </thead>
+        <tbody>
+          {productos.length ? (
+            productos.map((p) => {
+              const stock = estadoStock(p.stock);
+              return (
+                <tr key={p.id}>
+                  <td>{p.id}</td>
+                  <td>
+                    <img
+                      className="admin-thumb rounded me-2"
+                      src={p.imagen}
+                      alt=""
                     />
-                  </div>
-
-                  <div className="row">
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label" htmlFor="precio-input">Precio</label>
-                      <input
-                        id="precio-input"
-                        type="number"
-                        className="form-control"
-                        value={formData.precio}
-                        onChange={(e) => setFormData({ ...formData, precio: e.target.value })}
-                      />
-                    </div>
-                    <div className="col-md-6 mb-3">
-                      <label className="form-label" htmlFor="stock-input">Stock</label>
-                      <input
-                        id="stock-input"
-                        type="number"
-                        className="form-control"
-                        value={formData.stock}
-                        onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label" htmlFor="categoria-select">Categoría</label>
-                    <select
-                      id="categoria-select"
-                      className="form-control"
-                      value={formData.categoria}
-                      onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
+                    {p.nombre}
+                  </td>
+                  <td>{p.categoria}</td>
+                  <td>{precioCLP(p.precio)}</td>
+                  <td>{p.stock}</td>
+                  <td>
+                    <Badge
+                      bg={stock.variante}
+                      text={stock.variante === 'warning' ? 'dark' : undefined}
                     >
-                      <option value="Accesorios">Accesorios</option>
-                      <option value="Tecnología">Tecnología</option>
-                      <option value="Audio">Audio</option>
-                      <option value="Cuerdas">Cuerdas</option>
-                    </select>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label" htmlFor="imagen-input">URL de la imagen</label>
-                    <input
-                      id="imagen-input"
-                      type="text"
-                      className="form-control"
-                      placeholder="https://..."
-                      value={formData.imagen}
-                      onChange={(e) => setFormData({ ...formData, imagen: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setModalOpen(false)}>
-                    Cancelar
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Guardar producto
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Confirmar Eliminar */}
-      {eliminarId && (
-        <ConfirmarModal
-          titulo="Eliminar producto"
-          mensaje="¿Estás seguro de que deseas eliminar este producto?"
-          onConfirmar={confirmarEliminar}
-          onCancelar={() => setEliminarId(null)}
+                      {stock.texto}
+                    </Badge>
+                  </td>
+                  <td className="text-nowrap">
+                    <Button
+                      size="sm"
+                      variant="warning"
+                      onClick={() => editar(p)}
+                    >
+                      Editar {p.nombre}
+                    </Button>{' '}
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => setEliminando(p)}
+                    >
+                      Eliminar {p.nombre}
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan={7}>No hay productos registrados.</td>
+            </tr>
+          )}
+        </tbody>
+      </Table>
+      {modal && (
+        <ProductoModal
+          producto={editando}
+          productos={productos}
+          guardar={guardar}
+          cerrar={() => setModal(false)}
         />
       )}
-    </div>
+      <ConfirmarModal
+        abierto={eliminando !== null}
+        titulo="Eliminar producto"
+        confirmar={confirmarEliminar}
+        cancelar={() => setEliminando(null)}
+      >
+        ¿Eliminar {eliminando?.nombre}? También se retirará del carrito si
+        está agregado.
+      </ConfirmarModal>
+    </Container>
   );
 }

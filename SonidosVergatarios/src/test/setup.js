@@ -2,33 +2,24 @@ import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 
-const localStorageMock = (() => {
-  let store = {};
-  return {
-    getItem: (key) => store[key] || null,
-    setItem: (key, value) => {
-      store[key] = String(value);
-    },
-    removeItem: (key) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
-  };
-})();
+// jsdom no incluye matchMedia y Swiper (carrusel del inicio) lo necesita.
+if (!window.matchMedia) {
+  window.matchMedia = (query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent: () => false,
+  });
+}
 
-Object.defineProperty(globalThis, 'localStorage', {
-  value: localStorageMock,
-  writable: true,
-});
-
-beforeEach(() => {
-  globalThis.localStorage.clear();
-});
+beforeEach(() => localStorage.clear());
 
 afterEach(() => {
   cleanup();
-  globalThis.localStorage.clear();
+  localStorage.clear();
   vi.restoreAllMocks();
 });

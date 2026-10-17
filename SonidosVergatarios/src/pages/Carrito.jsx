@@ -81,9 +81,9 @@ export default function Carrito() {
                             </Link>
                           </h3>
                           <p className="small text-muted mb-1">
-                            {p.categoria} · {p.marca}
+                            {[p.categoria, p.marca].filter(Boolean).join(' · ')}
                           </p>
-                          <p className="small mb-2">{p.descripcion}</p>
+                          {p.descripcion && <p className="small mb-2">{p.descripcion}</p>}
                           <Button
                             variant="link"
                             size="sm"
@@ -92,8 +92,8 @@ export default function Carrito() {
                               dispatch({ type: 'QUITAR', id: p.id })
                             }
                           >
-                            🗑 Eliminar
-                            <span className="visually-hidden"> {p.nombre}</span>
+                            <span aria-hidden="true">🗑</span> Eliminar{' '}
+                            <span className="visually-hidden">{p.nombre}</span>
                           </Button>
                         </Col>
 
@@ -158,7 +158,7 @@ export default function Carrito() {
 
                 <Card.Footer className="d-flex justify-content-between flex-wrap gap-2 bg-white">
                   <Button as={Link} to="/productos" variant="outline-primary">
-                    ← Continuar comprando
+                    <span aria-hidden="true">←</span> Continuar comprando
                   </Button>
                   <Button
                     variant="outline-danger"
@@ -195,7 +195,7 @@ export default function Carrito() {
                   disabled={stockCambio}
                   onClick={() => setConfirmacion('compra')}
                 >
-                  🛒 Finalizar compra
+                  <span aria-hidden="true">🛒</span> Finalizar compra
                 </Button>
                 <p className="small text-muted mt-3 mb-0">
                   Esta compra es una simulación: se descuenta el stock pero no
@@ -228,7 +228,9 @@ export default function Carrito() {
                 {sugeridos.map((p) => (
                   <ListGroup.Item key={p.id}>
                     <p className="fw-semibold mb-1">{p.nombre}</p>
-                    <p className="small text-muted mb-2">{p.descripcion}</p>
+                    {p.descripcion && (
+                      <p className="small text-muted mb-2">{p.descripcion}</p>
+                    )}
                     <div className="d-flex justify-content-between align-items-center">
                       <span>{precioCLP(p.precio)}</span>
                       <Button
@@ -236,8 +238,8 @@ export default function Carrito() {
                         variant="outline-primary"
                         onClick={() => dispatch({ type: 'AGREGAR', id: p.id })}
                       >
-                        Agregar
-                        <span className="visually-hidden"> {p.nombre}</span>
+                        Agregar{' '}
+                        <span className="visually-hidden">{p.nombre}</span>
                       </Button>
                     </div>
                   </ListGroup.Item>

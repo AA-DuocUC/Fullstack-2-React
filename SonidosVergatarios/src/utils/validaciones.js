@@ -34,13 +34,18 @@ export function validarProducto(datos, productos, id = null) {
 }
  
 export function convertirProducto(datos) {
-  return {
+  const producto = {
     nombre: datos.nombre.trim(),
     categoria: datos.categoria.trim(),
     precio: Number(datos.precio),
     stock: Number(datos.stock),
     imagen: datos.imagen.trim(),
   };
+  // Marca y descripción son opcionales: solo se incluyen si el formulario las envía.
+  if (typeof datos.marca === 'string') producto.marca = datos.marca.trim();
+  if (typeof datos.descripcion === 'string')
+    producto.descripcion = datos.descripcion.trim();
+  return producto;
 }
  
 export function validarContacto(campos) {
