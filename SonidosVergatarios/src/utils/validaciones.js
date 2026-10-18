@@ -67,3 +67,55 @@ export function validarContacto(campos) {
       'El mensaje debe tener entre 10 y 500 caracteres válidos.';
   return errores;
 }
+
+const USUARIO_VALIDO = /^[a-zA-Z0-9._-]{3,20}$/;
+const EMAIL_VALIDO = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const USUARIOS_RESERVADOS = ['admin', 'administrador', 'root'];
+
+export function validarRegistro(datos, usuarios = []) {
+  const errores = {};
+  const usuario = datos.usuario.trim();
+  if (!USUARIO_VALIDO.test(usuario))
+    errores.usuario =
+      'Usa de 3 a 20 caracteres: letras, números, punto, guion o guion bajo.';
+  else if (
+    USUARIOS_RESERVADOS.includes(normalizar(usuario)) ||
+    usuarios.some((u) => normalizar(u.usuario) === normalizar(usuario))
+  )
+    errores.usuario = 'Ese nombre de usuario no está disponible.';
+
+  const email = datos.email.trim();
+  if (!EMAIL_VALIDO.test(email))
+    errores.email = 'Ingresa un correo electrónico válido.';
+  else if (usuarios.some((u) => normalizar(u.email) === normalizar(email)))
+    errores.email = 'Ya existe una cuenta con ese correo.';
+
+  const clave = datos.contrasena;
+  if (
+    clave.length < 8 ||
+    clave.length > 64 ||
+    !/[A-Za-z]/.test(clave) ||
+    !/\d/.test(clave)
+  )
+    errores.contrasena =
+      'Usa de 8 a 64 caracteres, con al menos una letra y un número.';
+
+  if (datos.confirmar !== clave)
+    errores.confirmar = 'Las contraseñas no coinciden.';
+  return errores;
+}
+
+export function validarLoginCliente(campos) {
+  const errores = {};
+  if (!campos.identificador.trim())
+    errores.identificador = 'Ingresa tu correo o nombre de usuario.';
+  if (!campos.contrasena) errores.contrasena = 'Ingresa tu contraseña.';
+  return errores;
+}
+
+export function validarLoginAdmin(campos) {
+  const errores = {};
+  if (!campos.usuario.trim()) errores.usuario = 'Ingresa el usuario.';
+  if (!campos.contrasena) errores.contrasena = 'Ingresa la contraseña.';
+  return errores;
+}

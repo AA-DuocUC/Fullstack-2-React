@@ -4,6 +4,8 @@ import {
   guardarTienda,
   cargarSesion,
   guardarSesion,
+  cargarUsuarios,
+  guardarUsuarios,
   CLAVES,
 } from './almacen_tienda.js';
 import { productosIniciales } from '../data/productosIniciales.js';
@@ -74,5 +76,59 @@ describe('persistencia', () => {
       JSON.stringify({ usuario: 'otro', rol: 'cliente' }),
     );
     expect(cargarSesion()).toBeNull();
+  });
+
+  it('descarta una sesión de cliente cuya cuenta ya no existe', () => {
+    localStorage.setItem(
+      CLAVES.sesion,
+      JSON.stringify({ usuario: 'fantasma', rol: 'cliente' }),
+    );
+    expect(cargarSesion()).toBeNull();
+  });
+});
+
+describe('cuentas de usuario', () => {
+  const cuenta = (usuario) => ({
+    id: 1,
+    usuario,
+    email: `${usuario}@correo.cl`,
+    sal: 's',
+    clave: 'h',
+  });
+
+  it('guarda y recupera las cuentas', () => {
+    expect(guardarUsuarios([cuenta('abrahan')])).toBe(true);
+    expect(cargarUsuarios()).toEqual([cuenta('abrahan')]);
+  });
+
+  it('descarta cuentas inválidas o repetidas y se recupera de JSON corrupto', () => {
+    localStorage.setItem(
+      CLAVES.usuarios,
+      JSON.stringify([
+        cuenta('ana'),
+        cuenta('ANA'),
+        { usuario: 'sinclave' },
+        null,
+      ]),
+    );
+    expect(cargarUsuarios()).toEqual([cuenta('ana')]);
+    localStorage.setItem(CLAVES.usuarios, '{roto');
+    expect(cargarUsuarios()).toEqual([]);
+    localStorage.setItem(CLAVES.usuarios, JSON.stringify({ no: 'lista' }));
+    expect(cargarUsuarios()).toEqual([]);
+  });
+
+  it('acepta una sesión de cliente solo si la cuenta existe', () => {
+    guardarUsuarios([cuenta('abrahan')]);
+    const sesion = { usuario: 'abrahan', rol: 'cliente', nombre: 'abrahan' };
+    guardarSesion(sesion);
+    expect(cargarSesion()).toEqual(sesion);
+  });
+
+  it('informa si el navegador rechaza guardar las cuentas', () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('Sin espacio');
+    });
+    expect(guardarUsuarios([cuenta('abrahan')])).toBe(false);
   });
 });

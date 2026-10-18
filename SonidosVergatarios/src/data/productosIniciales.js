@@ -3,7 +3,7 @@ export const productosIniciales = [
         id: 1, codigo: 'GA001', nombre: 'Guitarra Acústica Folk', precio: 129990,
         stock: 8, categoria: 'Guitarras Acústicas', marca: 'Yamaha', modelo: 'F310',
         descripcion: 'Tapa de abeto, aros y fondo de meranti. Ideal para iniciantes.',
-        imagen: 'https://placehold.co/400x400?text=' + encodeURIComponent('Guitarra Acústica Folk')
+        imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy_QHpxYeKChSb4Ks7rpgofVM8D1KLiHd4quCedYthYf_NMxU2xpVQC9Vy&s=10' + encodeURIComponent('Guitarra Acústica Folk')
     },
     {
         id: 2, codigo: 'GA002', nombre: 'Guitarra Acústica Dreadnought', precio: 189990,
@@ -21,7 +21,7 @@ export const productosIniciales = [
         id: 4, codigo: 'GA004', nombre: 'Guitarra Electroacústica', precio: 349990,
         stock: 3, categoria: 'Guitarras Acústicas', marca: 'Takamine', modelo: 'GN20CE',
         descripcion: 'Pickup integrado, afinador incorporado.',
-        imagen: 'https://placehold.co/400x400?text=' + encodeURIComponent('Guitarra Electroacústica')
+        imagen: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdnqU_ltO-RqPw2ebHUZPfPAiVQaTQjqyM3W9roN22ku2mG_oPMYZhF1I&s=10' + encodeURIComponent('Guitarra Electroacústica')
     },
     {
         id: 5, codigo: 'GA005', nombre: 'Guitarra 3/4 Niños', precio: 79990,

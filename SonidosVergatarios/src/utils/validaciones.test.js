@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { validarContacto, validarProducto } from './validaciones.js';
+import {
+  validarContacto,
+  validarLoginAdmin,
+  validarLoginCliente,
+  validarProducto,
+  validarRegistro,
+} from './validaciones.js';
 import { estadoStock, normalizar, precioCLP } from './formato.js';
+import { crearSal, hashClave } from './claves.js';
 
 const valido = {
   nombre: 'Guitarra',
@@ -82,5 +89,100 @@ describe('formato', () => {
       variante: 'warning',
     });
     expect(estadoStock(8).variante).toBe('success');
+  });
+});
+
+const registroValido = {
+  usuario: 'abrahan',
+  email: 'abrahan@correo.cl',
+  contrasena: 'Guitarra123',
+  confirmar: 'Guitarra123',
+};
+
+describe('registro de clientes', () => {
+  it('acepta un registro válido', () => {
+    expect(validarRegistro(registroValido, [])).toEqual({});
+  });
+
+  it('informa todos los errores a la vez y en orden', () => {
+    expect(
+      Object.keys(
+        validarRegistro(
+          { usuario: 'a', email: 'mal', contrasena: 'corta', confirmar: 'x' },
+          [],
+        ),
+      ),
+    ).toEqual(['usuario', 'email', 'contrasena', 'confirmar']);
+  });
+
+  it.each([
+    ['ab', 'muy corto'],
+    ['con espacios', 'con espacios'],
+    ['a'.repeat(21), 'muy largo'],
+    ['ñandú', 'con caracteres no permitidos'],
+  ])('rechaza el usuario "%s" (%s)', (usuario) => {
+    expect(validarRegistro({ ...registroValido, usuario }, [])).toHaveProperty(
+      'usuario',
+    );
+  });
+
+  it.each(['admin', 'ADMIN', 'Administrador', 'root'])(
+    'reserva el nombre %s',
+    (usuario) => {
+      expect(
+        validarRegistro({ ...registroValido, usuario }, []).usuario,
+      ).toBe('Ese nombre de usuario no está disponible.');
+    },
+  );
+
+  it.each([
+    ['solonumeros1', true],
+    ['12345678', false],
+    ['sololetras', false],
+    ['Ab1', false],
+    ['a1'.repeat(33), false],
+  ])('valida la contraseña %s', (contrasena, valida) => {
+    const errores = validarRegistro(
+      { ...registroValido, contrasena, confirmar: contrasena },
+      [],
+    );
+    expect(Object.hasOwn(errores, 'contrasena')).toBe(!valida);
+  });
+
+  it('detecta usuario y correo repetidos sin distinguir mayúsculas', () => {
+    const existentes = [{ usuario: 'Abrahan', email: 'ABRAHAN@correo.cl' }];
+    const errores = validarRegistro(registroValido, existentes);
+    expect(errores.usuario).toBe('Ese nombre de usuario no está disponible.');
+    expect(errores.email).toBe('Ya existe una cuenta con ese correo.');
+  });
+
+  it('valida los formularios de ingreso', () => {
+    expect(
+      Object.keys(validarLoginCliente({ identificador: ' ', contrasena: '' })),
+    ).toEqual(['identificador', 'contrasena']);
+    expect(
+      validarLoginCliente({ identificador: 'abrahan', contrasena: 'x' }),
+    ).toEqual({});
+    expect(
+      Object.keys(validarLoginAdmin({ usuario: '', contrasena: '' })),
+    ).toEqual(['usuario', 'contrasena']);
+    expect(validarLoginAdmin({ usuario: 'admin', contrasena: '1234' })).toEqual(
+      {},
+    );
+  });
+});
+
+describe('claves', () => {
+  it('genera el mismo hash para la misma clave y sal, y no deja la clave a la vista', () => {
+    const sal = crearSal();
+    const hash = hashClave('Guitarra123', sal);
+    expect(hashClave('Guitarra123', sal)).toBe(hash);
+    expect(hash).not.toContain('Guitarra123');
+  });
+
+  it('cambia el hash con otra clave o con otra sal', () => {
+    expect(hashClave('Guitarra123', 'a')).not.toBe(hashClave('Guitarra124', 'a'));
+    expect(hashClave('Guitarra123', 'a')).not.toBe(hashClave('Guitarra123', 'b'));
+    expect(crearSal()).not.toBe(crearSal());
   });
 });

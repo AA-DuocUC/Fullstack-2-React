@@ -1,4 +1,5 @@
-import { Link, NavLink, useNavigate } from 'react-router';
+import { useEffect, useRef } from 'react';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router';
 import Badge from 'react-bootstrap/Badge';
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
@@ -12,10 +13,25 @@ export default function Header() {
   const { estado } = useTienda();
   const { sesion, cerrarSesion } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const saliendo = useRef(false);
   const { unidades } = resumenCarrito(estado);
 
+  // La sesión se cierra cuando el router ya llegó al inicio. Si se cerrara
+  // antes, la ruta del panel vería "sin sesión" y redirigiría al login.
+  useEffect(() => {
+    if (saliendo.current && pathname === '/') {
+      saliendo.current = false;
+      cerrarSesion();
+    }
+  }, [pathname, cerrarSesion]);
+
   function salir() {
-    cerrarSesion();
+    if (pathname === '/') {
+      cerrarSesion();
+      return;
+    }
+    saliendo.current = true;
     navigate('/', { replace: true });
   }
 
@@ -58,18 +74,25 @@ export default function Header() {
                   {unidades}
                 </Badge>
               </Nav.Link>
-              <Nav.Link as={NavLink} to="/admin">
-                Admin
-              </Nav.Link>
+              {sesion?.rol === 'admin' && (
+                <Nav.Link as={NavLink} to="/admin">
+                  Administración
+                </Nav.Link>
+              )}
               {sesion ? (
-                <Button
-                  variant="outline-light"
-                  size="sm"
-                  className="ms-lg-2"
-                  onClick={salir}
-                >
-                  Cerrar sesión
-                </Button>
+                <>
+                  <Navbar.Text className="usuario-cabecera">
+                    Hola, <strong>@{sesion.nombre}</strong>
+                  </Navbar.Text>
+                  <Button
+                    variant="outline-light"
+                    size="sm"
+                    className="ms-lg-2"
+                    onClick={salir}
+                  >
+                    Cerrar sesión
+                  </Button>
+                </>
               ) : (
                 <Nav.Link as={NavLink} to="/login">
                   Ingresar

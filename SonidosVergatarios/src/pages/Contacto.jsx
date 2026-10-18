@@ -41,12 +41,11 @@ export default function Contacto() {
     <Container as="section" className="py-4">
       <h1>Contacto</h1>
       <p>
-        Formulario de demostración. Se valida en el navegador; no se envía
-        correo. También puedes escribirnos a tienda@sonidosvergatarios.com.
+        Dejanos tu opinión o pregunta. También puedes escribirnos a tienda@sonidosvergatarios.com.
       </p>
       {enviado && (
         <Alert variant="success" role="status">
-          Mensaje validado correctamente.
+          Mensaje enviado correctamente.
         </Alert>
       )}
       <Form className="formulario-contacto" onSubmit={enviar} noValidate>
@@ -78,7 +77,7 @@ export default function Contacto() {
             </Form.Control.Feedback>
           </Form.Group>
         ))}
-        <Button type="submit">Validar mensaje</Button>
+        <Button type="submit">Enviar mensaje</Button>
       </Form>
     </Container>
   );

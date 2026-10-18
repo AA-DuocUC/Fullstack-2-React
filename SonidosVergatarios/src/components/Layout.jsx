@@ -24,7 +24,9 @@ export default function Layout() {
 
   useEffect(() => {
     document.title = `${TITULOS[pathname] ?? 'Página no encontrada'} | SonidosVergatarios`;
-    main.current?.focus();
+    // Vuelve arriba y mueve el foco al contenido sin ocultar la cabecera.
+    window.scrollTo?.(0, 0);
+    main.current?.focus({ preventScroll: true });
     dispatch({ type: 'CERRAR_AVISO' });
   }, [pathname, dispatch]);
 

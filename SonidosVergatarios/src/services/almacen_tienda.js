@@ -4,6 +4,7 @@ import { crearEstado } from '../store/TiendaVergataria.js';
 export const CLAVES = {
   tienda: 'SonidosVergatarios-react-tienda-v2',
   sesion: 'SonidosVergatarios-react-sesion',
+  usuarios: 'SonidosVergatarios-react-usuarios',
 };
 export function leerJSON(clave, alternativa) {
   try {
@@ -71,10 +72,52 @@ export function guardarTienda(estado) {
     return false;
   }
 }
+
+function usuarioValido(u) {
+  return (
+    u &&
+    typeof u.usuario === 'string' &&
+    u.usuario.trim() !== '' &&
+    typeof u.email === 'string' &&
+    typeof u.sal === 'string' &&
+    typeof u.clave === 'string'
+  );
+}
+
+export function cargarUsuarios() {
+  const guardados = leerJSON(CLAVES.usuarios, []);
+  if (!Array.isArray(guardados)) return [];
+  const vistos = new Set();
+  return guardados.filter((u) => {
+    const clave = usuarioValido(u) ? u.usuario.trim().toLowerCase() : null;
+    if (!clave || vistos.has(clave)) return false;
+    vistos.add(clave);
+    return true;
+  });
+}
+
+export function guardarUsuarios(usuarios) {
+  try {
+    localStorage.setItem(CLAVES.usuarios, JSON.stringify(usuarios));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function cargarSesion() {
   const valor = leerJSON(CLAVES.sesion, null);
-  return valor?.usuario === 'admin' && valor?.rol === 'admin' ? valor : null;
+  if (valor?.rol === 'admin' && valor?.usuario === 'admin') return valor;
+  // Una sesión de cliente solo es válida si esa cuenta todavía existe.
+  if (
+    valor?.rol === 'cliente' &&
+    typeof valor.usuario === 'string' &&
+    cargarUsuarios().some((u) => u.usuario === valor.usuario)
+  )
+    return valor;
+  return null;
 }
+
 export function guardarSesion(sesion) {
   try {
     if (sesion) localStorage.setItem(CLAVES.sesion, JSON.stringify(sesion));

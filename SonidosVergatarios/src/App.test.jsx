@@ -56,20 +56,22 @@ describe('navegación y acceso', () => {
     ).toBeInTheDocument();
   });
 
-  it('redirige Admin a login, rechaza una contraseña incorrecta y permite entrar y salir', async () => {
+  it('redirige /admin al login (pestaña Administrador), rechaza una clave incorrecta y permite entrar y salir', async () => {
     const user = userEvent.setup();
     renderApp('/admin');
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Inicio de sesión administrador',
-      }),
+      await screen.findByRole('heading', { name: 'Acceso administrador' }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Administrador' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
 
     await user.type(screen.getByLabelText('Usuario'), 'admin');
     await user.type(screen.getByLabelText('Contraseña'), 'incorrecta');
     await user.click(
-      screen.getByRole('button', { name: 'Ingresar', exact: true }),
+      screen.getByRole('button', { name: 'Ingresar como administrador' }),
     );
     expect(
       await screen.findByText('Usuario o contraseña incorrectos.'),
@@ -78,7 +80,7 @@ describe('navegación y acceso', () => {
     await user.clear(screen.getByLabelText('Contraseña'));
     await user.type(screen.getByLabelText('Contraseña'), '1234');
     await user.click(
-      screen.getByRole('button', { name: 'Ingresar', exact: true }),
+      screen.getByRole('button', { name: 'Ingresar como administrador' }),
     );
     expect(
       await screen.findByRole('heading', {
@@ -90,13 +92,32 @@ describe('navegación y acceso', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
-    await user.click(screen.getByRole('link', { name: 'Admin', exact: true }));
+    // Al salir del panel se vuelve al inicio, no al login.
     expect(
       await screen.findByRole('heading', {
-        name: 'Inicio de sesión administrador',
+        name: 'Bienvenido a SonidosVergatarios',
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Administración' }),
+    ).not.toBeInTheDocument();
     expect(localStorage.getItem(CLAVES.sesion)).toBeNull();
+
+    // Hay una sola puerta de entrada: "Ingresar" lleva al login único.
+    await user.click(screen.getByRole('link', { name: 'Ingresar' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Iniciar sesión' }),
+    ).toBeInTheDocument();
+  });
+
+  it('exige usuario y contraseña al administrador antes de comprobar la clave', async () => {
+    const user = userEvent.setup();
+    renderApp('/admin');
+    await user.click(
+      await screen.findByRole('button', { name: 'Ingresar como administrador' }),
+    );
+    expect(screen.getByText('Ingresa el usuario.')).toBeInTheDocument();
+    expect(screen.getByText('Ingresa la contraseña.')).toBeInTheDocument();
   });
 
   it('restaura la sesión al volver a montar la aplicación', () => {
@@ -113,6 +134,212 @@ describe('navegación y acceso', () => {
     expect(
       screen.getByRole('heading', { name: 'Administración de productos' }),
     ).toBeInTheDocument();
+  });
+});
+
+async function registrarCliente(
+  user,
+  { usuario = 'abrahan', email = 'abrahan@correo.cl', clave = 'Guitarra123' } = {},
+) {
+  await user.click(screen.getByRole('button', { name: 'Crear una cuenta' }));
+  await user.type(screen.getByLabelText('Nombre de usuario'), usuario);
+  await user.type(screen.getByLabelText('Correo electrónico'), email);
+  await user.type(screen.getByLabelText('Contraseña'), clave);
+  await user.type(screen.getByLabelText('Confirmar contraseña'), clave);
+  await user.click(screen.getByRole('button', { name: 'Crear cuenta' }));
+}
+
+describe('cuentas de cliente', () => {
+  it('ofrece dos partes en un solo login: cliente y administrador', async () => {
+    const user = userEvent.setup();
+    renderApp('/login');
+    expect(
+      screen.getByRole('heading', { name: 'Iniciar sesión' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cliente' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Administrador' }));
+    expect(
+      screen.getByRole('heading', { name: 'Acceso administrador' }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cliente' }));
+    expect(
+      screen.getByRole('heading', { name: 'Iniciar sesión' }),
+    ).toBeInTheDocument();
+  });
+
+  it('valida el registro campo por campo y en conjunto', async () => {
+    const user = userEvent.setup();
+    renderApp('/login');
+    await user.click(screen.getByRole('button', { name: 'Crear una cuenta' }));
+    expect(
+      screen.getByRole('heading', { name: 'Crear cuenta' }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }));
+    expect(
+      screen.getByText(/Usa de 3 a 20 caracteres/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Ingresa un correo electrónico válido.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Usa de 8 a 64 caracteres/),
+    ).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Nombre de usuario'), 'admin');
+    await user.type(screen.getByLabelText('Correo electrónico'), 'a@b.cl');
+    await user.type(screen.getByLabelText('Contraseña'), 'Guitarra123');
+    await user.type(
+      screen.getByLabelText('Confirmar contraseña'),
+      'Guitarra124',
+    );
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }));
+    expect(
+      screen.getByText('Ese nombre de usuario no está disponible.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Las contraseñas no coinciden.'),
+    ).toBeInTheDocument();
+  });
+
+  it('registra una cuenta, inicia sesión y da la bienvenida con el nombre de usuario', async () => {
+    const user = userEvent.setup();
+    renderApp('/login');
+    await registrarCliente(user);
+
+    expect(
+      await screen.findByText('Cuenta creada. Ahora inicia sesión.'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Correo o usuario')).toHaveValue('abrahan');
+
+    // Contraseña incorrecta: no entra.
+    await user.type(screen.getByLabelText('Contraseña'), 'Equivocada1');
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
+    expect(
+      await screen.findByText('Usuario o contraseña incorrectos.'),
+    ).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText('Contraseña'));
+    await user.type(screen.getByLabelText('Contraseña'), 'Guitarra123');
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Bienvenido @abrahan' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Hola,')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem(CLAVES.sesion)).rol).toBe('cliente');
+    // Un cliente no ve el acceso al panel.
+    expect(
+      screen.queryByRole('link', { name: 'Administración' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('permite ingresar con el correo y no guarda la contraseña en texto plano', async () => {
+    const user = userEvent.setup();
+    renderApp('/login');
+    await registrarCliente(user);
+
+    const guardado = localStorage.getItem(CLAVES.usuarios);
+    expect(guardado).not.toContain('Guitarra123');
+
+    await user.clear(await screen.findByLabelText('Correo o usuario'));
+    await user.type(
+      screen.getByLabelText('Correo o usuario'),
+      'ABRAHAN@correo.cl',
+    );
+    await user.type(screen.getByLabelText('Contraseña'), 'Guitarra123');
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Bienvenido @abrahan' }),
+    ).toBeInTheDocument();
+  });
+
+  it('rechaza registrar un usuario o un correo que ya existen', async () => {
+    const user = userEvent.setup();
+    renderApp('/login');
+    await registrarCliente(user);
+    await user.click(
+      await screen.findByRole('button', { name: 'Crear una cuenta' }),
+    );
+    await user.type(screen.getByLabelText('Nombre de usuario'), 'ABRAHAN');
+    await user.type(
+      screen.getByLabelText('Correo electrónico'),
+      'abrahan@correo.cl',
+    );
+    await user.type(screen.getByLabelText('Contraseña'), 'Otra12345');
+    await user.type(screen.getByLabelText('Confirmar contraseña'), 'Otra12345');
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }));
+    expect(
+      screen.getByText('Ese nombre de usuario no está disponible.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Ya existe una cuenta con ese correo.'),
+    ).toBeInTheDocument();
+  });
+
+  it('exige correo o usuario y contraseña al ingresar como cliente', async () => {
+    const user = userEvent.setup();
+    renderApp('/login');
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
+    expect(
+      screen.getByText('Ingresa tu correo o nombre de usuario.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Ingresa tu contraseña.')).toBeInTheDocument();
+  });
+
+  it('muestra y oculta la contraseña', async () => {
+    const user = userEvent.setup();
+    renderApp('/login');
+    const campo = screen.getByLabelText('Contraseña');
+    expect(campo).toHaveAttribute('type', 'password');
+    await user.click(screen.getByRole('button', { name: 'Mostrar contraseña' }));
+    expect(campo).toHaveAttribute('type', 'text');
+    await user.click(screen.getByRole('button', { name: 'Ocultar contraseña' }));
+    expect(campo).toHaveAttribute('type', 'password');
+  });
+
+  it('un cliente no puede entrar al panel de administración', async () => {
+    const user = userEvent.setup();
+    const vista = renderApp('/login');
+    await registrarCliente(user);
+    await user.type(await screen.findByLabelText('Contraseña'), 'Guitarra123');
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
+    await screen.findByRole('heading', { name: 'Bienvenido @abrahan' });
+
+    vista.unmount();
+    renderApp('/admin'); // la sesión de cliente se restaura desde el almacenamiento
+    expect(
+      screen.getByRole('heading', { name: 'Acceso restringido' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Administración de productos' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('conserva la sesión del cliente y la cierra con Cerrar sesión', async () => {
+    const user = userEvent.setup();
+    const vista = renderApp('/login');
+    await registrarCliente(user);
+    await user.type(await screen.findByLabelText('Contraseña'), 'Guitarra123');
+    await user.click(screen.getByRole('button', { name: 'Ingresar' }));
+    await screen.findByRole('heading', { name: 'Bienvenido @abrahan' });
+
+    vista.unmount();
+    renderApp('/');
+    expect(
+      screen.getByRole('heading', { name: 'Bienvenido @abrahan' }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+    expect(
+      screen.getByRole('heading', { name: 'Bienvenido a SonidosVergatarios' }),
+    ).toBeInTheDocument();
+    expect(localStorage.getItem(CLAVES.sesion)).toBeNull();
   });
 });
 
@@ -345,7 +572,7 @@ describe('administración y contacto', () => {
     const user = userEvent.setup();
     renderApp('/contacto');
 
-    await user.click(screen.getByRole('button', { name: 'Validar mensaje' }));
+    await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
     expect(
       screen.getByText('Ingresa un correo electrónico válido.'),
     ).toBeInTheDocument();
@@ -362,9 +589,9 @@ describe('administración y contacto', () => {
       screen.getByLabelText('Mensaje'),
       'Quiero conocer el stock de un instrumento.',
     );
-    await user.click(screen.getByRole('button', { name: 'Validar mensaje' }));
+    await user.click(screen.getByRole('button', { name: 'Enviar mensaje' }));
     expect(
-      await screen.findByText('Mensaje validado correctamente.'),
+      await screen.findByText('Mensaje enviado correctamente.'),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Correo electrónico')).toHaveValue('');
   });

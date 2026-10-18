@@ -5,8 +5,9 @@ import Col from 'react-bootstrap/Col';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import CarruselProductos from '../components/CarruselProductos.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
 
-const accesos = [
+const accesosBase = [
   {
     titulo: 'Explorar',
     texto:
@@ -20,22 +21,55 @@ const accesos = [
     ruta: '/carrito',
     boton: 'Ir al carrito',
   },
-  {
-    titulo: 'Administrar',
-    texto: 'Crea, edita y elimina productos en el panel de administración.',
-    ruta: '/admin',
-    boton: 'Acceso admin',
-  },
 ];
 
+// La tercera tarjeta depende de quién esté mirando la página.
+function tercerAcceso(sesion) {
+  if (sesion?.rol === 'admin')
+    return {
+      titulo: 'Administrar',
+      texto: 'Crea, edita y elimina productos en el panel de administración.',
+      ruta: '/admin',
+      boton: 'Ir al panel',
+    };
+  if (sesion)
+    return {
+      titulo: 'Contacto',
+      texto: '¿Dudas sobre un instrumento? Escríbenos y te ayudamos.',
+      ruta: '/contacto',
+      boton: 'Escribir mensaje',
+    };
+  return {
+    titulo: 'Tu cuenta',
+    texto: 'Inicia sesión o crea una cuenta para comprar y recibir novedades.',
+    ruta: '/login',
+    boton: 'Ingresar',
+  };
+}
+
 export default function Inicio() {
+  const { sesion } = useAuth();
+  const accesos = [...accesosBase, tercerAcceso(sesion)];
   return (
     <>
       <section className="hero py-5">
         <Container className="py-4">
-          <h1 className="display-5 fw-bold">Bienvenido a SonidosVergatarios</h1>
+          <h1 className="display-5 fw-bold">
+            {sesion ? (
+              <>
+                Bienvenido{' '}
+                <span className="usuario-bienvenida">@{sesion.nombre}</span>
+              </>
+            ) : (
+              'Bienvenido a SonidosVergatarios'
+            )}
+          </h1>
           <p className="lead">
-            Tu tienda de productos musicales favorita y vergataria.
+            {sesion?.rol === 'admin'
+              ? 'Estás en modo administrador: gestiona el catálogo desde el panel.'
+              : sesion
+                ? 'Qué bueno verte de nuevo. Encuentra tu próximo instrumento.'
+                : 'Tu tienda de productos musicales favorita y vergataria.'}
           </p>
         </Container>
       </section>

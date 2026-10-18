@@ -16,6 +16,9 @@ if (!window.matchMedia) {
   });
 }
 
+// jsdom no implementa scrollTo (el Layout lo usa al cambiar de página).
+window.scrollTo = () => {};
+
 beforeEach(() => localStorage.clear());
 
 afterEach(() => {
